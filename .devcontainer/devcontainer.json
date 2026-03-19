@@ -1,5 +1,5 @@
 {
-  "name": "Faculty Repository Dev Environment",
+  "name": "AI Faculty Repository",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
@@ -7,20 +7,24 @@
     }
   },
   "forwardPorts": [5000, 3000],
+  "portsAttributes": {
+    "5000": {
+      "label": "Backend API",
+      "onAutoForward": "ignore"
+    },
+    "3000": {
+      "label": "Frontend SPA",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "pip install -r requirements.txt && mkdir -p uploads",
   "customizations": {
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-python.black-formatter",
         "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        "ms-azuretools.vscode-docker"
-      ],
-      "settings": {
-        "python.formatting.provider": "black"
-      }
+        "dbaeumer.vscode-eslint"
+      ]
     }
-  },
-  "postCreateCommand": "pip install -r requirements.txt && mkdir -p uploads",
-  "remoteUser": "vscode"
+  }
 }
