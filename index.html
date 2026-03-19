@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Faculty Repository</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style> body { background-color: #f3f4f6; } </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const API_URL = 'http://localhost:5000/api';
+
+        function App() {
+            const [token, setToken] = useState(localStorage.getItem('token'));
+            const [role, setRole] = useState(localStorage.getItem('role'));
+
+            const handleLogin = (newToken, newRole) => {
+                localStorage.setItem('token', newToken);
+                localStorage.setItem('role', newRole);
+                setToken(newToken);
+                setRole(newRole);
+            };
+
+            const handleLogout = () => {
+                localStorage.clear();
+                setToken(null);
+                setRole(null);
+            };
+
+            if (!token) return <Login onLogin={handleLogin} />;
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <nav className="bg-blue-900 text-white p-4 flex justify-between items-center shadow-lg">
+                        <h1 className="text-xl font-bold">SLU Faculty Repository</h1>
+                        <div>
+                            <span className="mr-4 capitalize bg-blue-800 px-3 py-1 rounded-full text-sm">Role: {role}</span>
+                            <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded transition">Logout</button>
+                        </div>
+                    </nav>
+                    <main className="flex-grow p-8 max-w-6xl mx-auto w-full">
+                        {role === 'admin' && <AdminDashboard token={token} />}
+                        {(role === 'admin' || role === 'faculty') && <UploadSection token={token} />}
+                        <SearchSection token={token} />
+                    </main>
+                </div>
+            );
+        }
+
+        function Login({ onLogin }) {
+            const [username, setUsername] = useState('admin');
+            const [password, setPassword] = useState('admin123');
+            const [error, setError] = useState('');
+
+            const submit = async (e) => {
+                e.preventDefault();
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    onLogin(data.access_token, data.role);
+                } else {
+                    setError(data.message);
+                }
+            };
+
+            return (
+                <div className="flex items-center justify-center min-h-screen">
+                    <form onSubmit={submit} className="bg-white p-8 rounded-lg shadow-md w-96">
+                        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">System Login</h2>
+                        {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4">{error}</div>}
+                        <input className="w-full border p-2 mb-4 rounded" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
+                        <input className="w-full border p-2 mb-6 rounded" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
+                        <button className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Login</button>
+                    </form>
+                </div>
+            );
+        }
+
+        function AdminDashboard({ token }) {
+            const [stats, setStats] = useState({ total_faculty: 0, total_courses: 0, total_publications: 0 });
+
+            useEffect(() => {
+                fetch(`${API_URL}/analytics`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    .then(res => res.json())
+                    .then(data => setStats(data));
+            }, []);
+
+            return (
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                    <div className="bg-white p-6 rounded shadow border-l-4 border-blue-500">
+                        <h3 className="text-gray-500 text-sm">Total Faculty</h3>
+                        <p className="text-3xl font-bold">{stats.total_faculty}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded shadow border-l-4 border-green-500">
+                        <h3 className="text-gray-500 text-sm">Course Materials</h3>
+                        <p className="text-3xl font-bold">{stats.total_courses}</p>
+                    </div>
+                    <div className="bg-white p-6 rounded shadow border-l-4 border-purple-500">
+                        <h3 className="text-gray-500 text-sm">Publications</h3>
+                        <p className="text-3xl font-bold">{stats.total_publications}</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function UploadSection({ token }) {
+            const [file, setFile] = useState(null);
+            const [title, setTitle] = useState('');
+            const [desc, setDesc] = useState('');
+            const [type, setType] = useState('course');
+            const [status, setStatus] = useState('');
+
+            const handleUpload = async (e) => {
+                e.preventDefault();
+                setStatus('Uploading...');
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', title);
+                formData.append('description', desc);
+                formData.append('type', type);
+                formData.append('faculty_id', 1); // Mocked for simplicity
+
+                const res = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                if (res.ok) {
+                    setStatus('Upload successful!');
+                    setTitle(''); setDesc(''); setFile(null);
+                } else {
+                    setStatus('Upload failed.');
+                }
+            };
+
+            return (
+                <div className="bg-white p-6 rounded shadow mb-8">
+                    <h2 className="text-xl font-bold mb-4">Upload Resource</h2>
+                    <form onSubmit={handleUpload} className="grid grid-cols-2 gap-4">
+                        <input required className="border p-2 rounded" placeholder="Document Title" value={title} onChange={e=>setTitle(e.target.value)} />
+                        <select className="border p-2 rounded" value={type} onChange={e=>setType(e.target.value)}>
+                            <option value="course">Course Material</option>
+                            <option value="publication">Publication / Journal</option>
+                        </select>
+                        <textarea required className="border p-2 rounded col-span-2" placeholder="Abstract / Description" value={desc} onChange={e=>setDesc(e.target.value)}></textarea>
+                        <input required type="file" className="border p-2 rounded col-span-2 bg-gray-50" onChange={e=>setFile(e.target.files[0])} />
+                        <button type="submit" className="bg-green-600 text-white p-2 rounded hover:bg-green-700 col-span-2">Upload File</button>
+                    </form>
+                    {status && <p className="mt-2 text-sm text-blue-600">{status}</p>}
+                </div>
+            );
+        }
+
+        function SearchSection({ token }) {
+            const [query, setQuery] = useState('');
+            const [results, setResults] = useState([]);
+            const [loading, setLoading] = useState(false);
+
+            const handleSearch = async () => {
+                if(!query) return;
+                setLoading(true);
+                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                setResults(data);
+                setLoading(false);
+            };
+
+            return (
+                <div className="bg-white p-6 rounded shadow">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        ✨ AI Semantic Search
+                    </h2>
+                    <div className="flex gap-2 mb-6">
+                        <input 
+                            className="flex-grow border p-3 rounded text-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                            placeholder="Search concepts, topics, or faculty research..." 
+                            value={query} 
+                            onChange={e => setQuery(e.target.value)}
+                            onKeyPress={e => e.key === 'Enter' && handleSearch()}
+                        />
+                        <button onClick={handleSearch} className="bg-blue-600 text-white px-6 rounded hover:bg-blue-700 font-bold">Search</button>
+                    </div>
+
+                    {loading ? <p>Analyzing semantic relevance...</p> : (
+                        <div className="space-y-4">
+                            {results.map(r => (
+                                <div key={r.id} className="border p-4 rounded hover:border-blue-300 transition bg-gray-50">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="text-lg font-bold text-blue-800">{r.title}</h3>
+                                        <span className="bg-gray-200 text-xs px-2 py-1 rounded uppercase tracking-wider">{r.type}</span>
+                                    </div>
+                                    <p className="text-gray-600 mb-3 text-sm">{r.description}</p>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-green-600 font-medium">Relevance: {(r.score * 100).toFixed(1)}%</span>
+                                        <a href={`http://localhost:5000${r.download_url}`} target="_blank" className="text-blue-600 hover:underline font-bold">Download File</a>
+                                    </div>
+                                </div>
+                            ))}
+                            {results.length === 0 && query && !loading && <p className="text-gray-500">No semantically relevant results found.</p>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
