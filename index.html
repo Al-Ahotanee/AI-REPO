@@ -3,222 +3,470 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Faculty Repository</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SLU Faculty Repository System</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <style> body { background-color: #f3f4f6; } </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Kept the elegant dark green/gold styling from your reference */
+            --j900: #064e3b; --j800: #065f46; --j700: #047857;
+            --gold: #facc15; --slate: #0f172a;
+        }
+        * { font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; }
+        body { background: #f1f5f9; margin: 0; }
+
+        /* ── Layout & Core Components (From Reference) ── */
+        .app-header { background: linear-gradient(135deg, var(--j900), var(--j800)); color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,.15); }
+        .sidebar { background: white; width: 260px; min-height: calc(100vh - 64px); position: fixed; left: 0; top: 64px; overflow-y: auto; border-right: 1px solid #e2e8f0; padding: 1.5rem 0; }
+        .main-content { margin-left: 260px; padding: 2rem; }
+        .nav-item { display: flex; align-items: center; gap: .75rem; padding: .75rem 1.25rem; margin: .25rem 1rem; border-radius: .75rem; cursor: pointer; font-weight: 600; color: #64748b; transition: all .2s; }
+        .nav-item:hover { background: #f8fafc; color: var(--j900); transform: translateX(4px); }
+        .nav-item.active { background: linear-gradient(135deg, var(--j900), var(--j800)); color: white; box-shadow: 0 4px 12px rgba(6,78,59,.3); }
+        
+        /* ── Cards & UI ── */
+        .card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,.05); transition: all .3s; }
+        .card:hover { box-shadow: 0 8px 16px rgba(0,0,0,.08); transform: translateY(-2px); }
+        .stat-card { background: white; border-radius: 1rem; padding: 1.75rem; border-left: 4px solid var(--j800); box-shadow: 0 1px 3px rgba(0,0,0,.05); transition: all .3s; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(6,78,59,.12); }
+        
+        /* ── Buttons & Forms ── */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; padding: .7rem 1.5rem; border-radius: .75rem; border: none; font-weight: 700; cursor: pointer; transition: all .2s; font-size: .9rem; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: scale(.98); }
+        .btn-primary { background: linear-gradient(135deg,var(--j900),var(--j800)); color: white; box-shadow: 0 4px 6px rgba(6,78,59,.25); }
+        .btn-gold { background: linear-gradient(135deg,var(--gold),#fbbf24); color: var(--j900); }
+        .btn-danger { background: #ef4444; color: white; padding: .5rem 1rem; border-radius: .5rem; font-size:.85rem; }
+        .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+        
+        .form-label { display: block; margin-bottom: .5rem; font-weight: 600; color: var(--slate); font-size:.875rem; }
+        .form-input { width: 100%; padding: .75rem 1rem; border: 2px solid #e2e8f0; border-radius: .75rem; font-size: .95rem; font-family: inherit; transition: border-color .2s; }
+        .form-input:focus { outline: none; border-color: var(--j800); box-shadow: 0 0 0 3px rgba(6,95,70,.1); }
+        
+        /* ── Badges & Tables & Headers ── */
+        .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .3rem .75rem; border-radius: 9999px; font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+        .badge-green { background: #d1fae5; color: #065f46; } .badge-blue { background: #dbeafe; color: #1e40af; } .badge-dark { background: var(--j900); color: white; }
+        
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: .75rem; overflow: hidden; }
+        .data-table thead { background: linear-gradient(135deg,var(--j900),var(--j800)); color: white; }
+        .data-table th { padding: .9rem 1.1rem; text-align: left; font-weight: 700; font-size:.75rem; text-transform: uppercase; letter-spacing:.05em; }
+        .data-table td { padding: .9rem 1.1rem; border-top: 1px solid #f1f5f9; font-size:.9rem; }
+        
+        .pg-header { background: linear-gradient(135deg,var(--j900),var(--j800)); color: white; padding: 1.75rem 2rem; border-radius: 1rem; margin-bottom: 1.75rem; }
+        .pg-header h1 { margin:0; font-size:1.75rem; font-weight:900; letter-spacing:-.04em; }
+        .pg-header p { margin:.4rem 0 0; opacity:.88; }
+        
+        /* ── Modals ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-box { background: white; border-radius: 1rem; padding: 2rem; max-width: 620px; width: 92%; max-height: 90vh; overflow-y: auto; }
+        
+        .spinner { border: 4px solid rgba(6,78,59,.1); border-left-color: var(--j900); border-radius: 50%; width: 48px; height: 48px; animation: spin 1s linear infinite; margin: auto; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* Landing Page Styles Extract */
+        .lp { font-family: 'Plus Jakarta Sans', sans-serif; background: #050c0a; color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; overflow: hidden;}
+        .lp-hero-h1 { font-family: 'Syne', sans-serif; font-size: clamp(3rem, 6vw, 5rem); font-weight: 800; line-height: 1.02; letter-spacing: -.04em; margin: 0 0 1.5rem; text-align: center; position: relative; z-index: 2;}
+        .lp-hero-h1 em { font-style: normal; background: linear-gradient(135deg, var(--gold), #fb923c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .lp-hero-sub { font-size: 1.15rem; color: rgba(255,255,255,.6); line-height: 1.7; max-width: 600px; text-align: center; margin: 0 0 2.5rem; position: relative; z-index: 2;}
+        .lp-btn-hero-primary { background: linear-gradient(135deg, var(--gold), #fb923c); color: #050c0a; padding: .9rem 2.25rem; border-radius: 9999px; font-weight: 800; font-size: 1rem; border: none; cursor: pointer; box-shadow: 0 8px 32px rgba(250,204,21,.35); transition: all .25s; position: relative; z-index: 2;}
+        .lp-btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(250,204,21,.45); }
+    </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const API_URL = 'http://localhost:5000/api';
+// ── API config logic from QuizMaster ───────────────────────────
+const API_BASE = (() => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return 'http://localhost:5000/api';
+    const { protocol, hostname } = window.location;
+    return `${protocol}//${hostname.replace('-3000.', '-5000.')}/api`; // Codespaces port mapping
+})();
 
-        function App() {
-            const [token, setToken] = useState(localStorage.getItem('token'));
-            const [role, setRole] = useState(localStorage.getItem('role'));
+const getAuthHeaders = () => {
+    const user = JSON.parse(localStorage.getItem('repo_user') || '{}');
+    return user.token ? { 'Authorization': `Bearer ${user.token}` } : {};
+};
 
-            const handleLogin = (newToken, newRole) => {
-                localStorage.setItem('token', newToken);
-                localStorage.setItem('role', newRole);
-                setToken(newToken);
-                setRole(newRole);
-            };
+const api = {
+    get: (path) => fetch(`${API_BASE}${path}`, { headers: getAuthHeaders() }).then(r => r.json()),
+    post: (path, body) => fetch(`${API_BASE}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }, body: JSON.stringify(body) }).then(r => r.json()),
+    upload: (path, formData) => fetch(`${API_BASE}${path}`, { method: 'POST', headers: getAuthHeaders(), body: formData }).then(r => r.json())
+};
 
-            const handleLogout = () => {
-                localStorage.clear();
-                setToken(null);
-                setRole(null);
-            };
+// ── Shared UI Components ──────────────────────────────────────────
+const Spinner = () => <div style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'200px'}}><div className="spinner"></div></div>;
+const Badge = ({ type='dark', children }) => <span className={`badge badge-${type}`}>{children}</span>;
 
-            if (!token) return <Login onLogin={handleLogin} />;
+const Modal = ({ open, onClose, title, children }) => {
+    if (!open) return null;
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-box" onClick={e=>e.stopPropagation()}>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'1.5rem'}}>
+                    <h2 style={{margin:0,fontSize:'1.4rem',fontWeight:900,color:'var(--j900)'}}>{title}</h2>
+                    <button onClick={onClose} style={{background:'none',border:'none',fontSize:'1.5rem',cursor:'pointer',color:'#64748b'}}><i className="fas fa-times"></i></button>
+                </div>
+                {children}
+            </div>
+        </div>
+    );
+};
 
-            return (
-                <div className="min-h-screen flex flex-col">
-                    <nav className="bg-blue-900 text-white p-4 flex justify-between items-center shadow-lg">
-                        <h1 className="text-xl font-bold">SLU Faculty Repository</h1>
+// ── Authentication ────────────────────────────────────────────────
+const LoginPage = ({ onLogin }) => {
+    const [form, setForm] = useState({ username:'', password:'' });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const submit = async (e) => {
+        e.preventDefault();
+        setLoading(true); setError('');
+        try {
+            const data = await fetch(`${API_BASE}/auth/login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) }).then(r => r.json());
+            if (data.success) {
+                const sessionData = { ...data.user, token: data.token };
+                localStorage.setItem('repo_user', JSON.stringify(sessionData));
+                onLogin(sessionData);
+            } else setError(data.error || 'Invalid credentials');
+        } catch { setError('Cannot reach server – is the backend running?'); }
+        setLoading(false);
+    };
+
+    return (
+        <div style={{minHeight:'100vh',background:'linear-gradient(135deg,var(--j900),var(--j800))',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}}>
+            <div className="card" style={{maxWidth:'420px',width:'100%'}}>
+                <div style={{textAlign:'center',marginBottom:'2rem'}}>
+                    <div style={{width:64,height:64,background:'var(--gold)',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 1rem',fontSize:'2rem',color:'var(--j900)'}}><i className="fas fa-university"></i></div>
+                    <h1 style={{fontSize:'1.875rem',fontWeight:900,color:'var(--j900)',margin:'0 0 .25rem'}}>Faculty Repository</h1>
+                    <p style={{color:'#64748b',margin:0,fontWeight:500}}>SLU Kafin Hausa</p>
+                </div>
+                <form onSubmit={submit}>
+                    {['username','password'].map(f => (
+                        <div key={f} style={{marginBottom:'1rem'}}>
+                            <label className="form-label"><i className={`fas fa-${f==='username'?'user':'lock'}`} style={{marginRight:'.5rem'}}></i>{f.charAt(0).toUpperCase()+f.slice(1)}</label>
+                            <input type={f==='password'?'password':'text'} className="form-input" placeholder={`Enter your ${f}`} value={form[f]} onChange={e=>setForm({...form,[f]:e.target.value})} required />
+                        </div>
+                    ))}
+                    {error && <div style={{background:'#fee2e2',color:'#991b1b',padding:'.75rem',borderRadius:'.75rem',marginBottom:'1rem'}}><i className="fas fa-exclamation-circle"></i> {error}</div>}
+                    <button type="submit" className="btn btn-primary" style={{width:'100%'}} disabled={loading}>
+                        {loading ? <><i className="fas fa-circle-notch fa-spin"></i> Signing in…</> : <><i className="fas fa-sign-in-alt"></i> Sign In</>}
+                    </button>
+                </form>
+                <div style={{marginTop:'1.5rem',padding:'1rem',background:'#f8fafc',borderRadius:'.75rem',border:'1px solid #e2e8f0',fontSize:'.8rem',color:'#475569'}}>
+                    <div style={{fontWeight:700,marginBottom:'.5rem',color:'#64748b'}}><i className="fas fa-info-circle"></i> Demo Access</div>
+                    <div><i className="fas fa-user-shield"></i> Admin: <strong>admin / admin123</strong></div>
+                    <div><i className="fas fa-chalkboard-teacher"></i> Faculty: <strong>faculty1 / fac123</strong></div>
+                    <div><i className="fas fa-user-graduate"></i> Student: <strong>student1 / stu123</strong></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ── Admin: Analytics Dashboard ────────────────────────────────────
+const AdminOverview = () => {
+    const [stats, setStats] = useState(null);
+    useEffect(() => { api.get('/analytics').then(setStats); }, []);
+    if (!stats) return <Spinner />;
+
+    return (
+        <div>
+            <div className="pg-header"><h1><i className="fas fa-chart-line" style={{marginRight:'.75rem'}}></i>Repository Analytics</h1><p>System Overview & Statistics</p></div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:'1.5rem',marginBottom:'2rem'}}>
+                {[
+                    {label:'Total Faculty', value:stats.total_faculty, icon:'fa-chalkboard-teacher', color:'var(--j900)'},
+                    {label:'Students Registered', value:stats.total_students, icon:'fa-user-graduate', color:'var(--j800)'},
+                    {label:'Course Materials', value:stats.total_courses, icon:'fa-book-open', color:'var(--j700)'},
+                    {label:'Publications', value:stats.total_publications, icon:'fa-file-alt', color:'#10b981'},
+                ].map(s => (
+                    <div key={s.label} className="stat-card">
+                        <div style={{fontSize:'.75rem',fontWeight:700,color:'#64748b',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:'.5rem'}}><i className={`fas ${s.icon}`} style={{marginRight:'.5rem',color:s.color}}></i>{s.label}</div>
+                        <div style={{fontSize:'2.5rem',fontWeight:900,color:s.color,letterSpacing:'-.05em'}}>{s.value}</div>
+                    </div>
+                ))}
+            </div>
+            <div className="card">
+                <h3 style={{fontSize:'1.1rem',fontWeight:900,color:'var(--j900)',marginTop:0,marginBottom:'1rem'}}><i className="fas fa-history"></i> Recent Uploads</h3>
+                <table className="data-table">
+                    <thead><tr><th>Title</th><th>Type</th><th>Uploader</th></tr></thead>
+                    <tbody>
+                        {stats.recent_uploads.map((u, i) => (
+                            <tr key={i}>
+                                <td style={{fontWeight:600}}>{u.title}</td>
+                                <td><Badge type={u.type==='course'?'blue':'green'}>{u.type}</Badge></td>
+                                <td>{u.uploader}</td>
+                            </tr>
+                        ))}
+                        {stats.recent_uploads.length === 0 && <tr><td colSpan="3" style={{textAlign:'center', padding:'2rem', color:'#64748b'}}>No resources uploaded yet.</td></tr>}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+// ── Admin: Faculty Management ─────────────────────────────────────
+const FacultyManagement = () => {
+    const [faculty, setFaculty] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [form, setForm] = useState({ username:'', password:'', full_name:'', department:'', research_interests:'' });
+    const [loading, setLoading] = useState(false);
+
+    const load = () => api.get('/faculty').then(setFaculty);
+    useEffect(() => { load(); }, []);
+
+    const create = async (e) => {
+        e.preventDefault(); setLoading(true);
+        const res = await api.post('/faculty', form);
+        setLoading(false);
+        if (res.success) { setShowModal(false); load(); setForm({ username:'', password:'', full_name:'', department:'', research_interests:'' }); }
+        else alert('Error creating faculty profile');
+    };
+
+    return (
+        <div>
+            <div className="pg-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div><h1 style={{margin:0}}><i className="fas fa-chalkboard-teacher" style={{marginRight:'.75rem'}}></i>Faculty Management</h1><p>Manage Staff Profiles & Departments</p></div>
+                <button className="btn btn-gold" onClick={()=>setShowModal(true)}><i className="fas fa-user-plus"></i>Add Faculty</button>
+            </div>
+            <div className="card" style={{padding:0,overflow:'hidden'}}>
+                <table className="data-table">
+                    <thead><tr><th>Full Name</th><th>Username</th><th>Department</th><th>Research Interests</th></tr></thead>
+                    <tbody>
+                        {faculty.map(f => (
+                            <tr key={f.id}>
+                                <td style={{fontWeight:600}}>{f.full_name}</td>
+                                <td>{f.username}</td>
+                                <td><Badge type="blue">{f.department}</Badge></td>
+                                <td style={{fontSize:'.85rem', color:'#64748b'}}>{f.research_interests}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <Modal open={showModal} onClose={()=>setShowModal(false)} title="Add Faculty Member">
+                <form onSubmit={create}>
+                    {[['Full Name','full_name','text'],['Username','username','text'],['Password','password','password'],['Department','department','text']].map(([label,key,type])=>(
+                        <div key={key} style={{marginBottom:'1rem'}}>
+                            <label className="form-label">{label}</label>
+                            <input type={type} className="form-input" value={form[key]} onChange={e=>setForm({...form,[key]:e.target.value})} required />
+                        </div>
+                    ))}
+                    <div style={{marginBottom:'1.5rem'}}>
+                        <label className="form-label">Research Interests</label>
+                        <textarea className="form-input" rows="2" value={form.research_interests} onChange={e=>setForm({...form,research_interests:e.target.value})}></textarea>
+                    </div>
+                    <button type="submit" className="btn btn-primary" style={{width:'100%'}} disabled={loading}>
+                        {loading?<><i className="fas fa-spinner fa-spin"></i> Saving…</>:<><i className="fas fa-check"></i> Add Faculty</>}
+                    </button>
+                </form>
+            </Modal>
+        </div>
+    );
+};
+
+// ── Resource Management (Faculty & Admin) ─────────────────────────
+const ResourceManagement = ({ role }) => {
+    const [resources, setResources] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [file, setFile] = useState(null);
+    const [form, setForm] = useState({ title:'', description:'', type:'course' });
+    const [loading, setLoading] = useState(false);
+
+    const load = () => api.get(role==='admin' ? '/resources?all=true' : '/resources').then(setResources);
+    useEffect(() => { load(); }, []);
+
+    const upload = async (e) => {
+        e.preventDefault(); setLoading(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', form.title);
+        formData.append('description', form.description);
+        formData.append('type', form.type);
+        
+        const res = await api.upload('/resources', formData);
+        setLoading(false);
+        if (res.success) { setShowModal(false); load(); setForm({ title:'', description:'', type:'course' }); setFile(null); }
+        else alert(res.error || 'Upload failed');
+    };
+
+    return (
+        <div>
+            <div className="pg-header" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div><h1 style={{margin:0}}><i className="fas fa-book" style={{marginRight:'.75rem'}}></i>Resource Management</h1><p>{role==='admin' ? 'All System Uploads' : 'Your Uploaded Materials'}</p></div>
+                <button className="btn btn-gold" onClick={()=>setShowModal(true)}><i className="fas fa-upload"></i> Upload File</button>
+            </div>
+            
+            <div style={{display:'grid', gap:'1rem'}}>
+                {resources.map(r => (
+                    <div key={r.id} className="card" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <div>
-                            <span className="mr-4 capitalize bg-blue-800 px-3 py-1 rounded-full text-sm">Role: {role}</span>
-                            <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded transition">Logout</button>
+                            <div style={{display:'flex', alignItems:'center', gap:'.75rem', marginBottom:'.5rem'}}>
+                                <h3 style={{margin:0, fontWeight:800}}>{r.title}</h3>
+                                <Badge type={r.type==='course'?'blue':'green'}>{r.type}</Badge>
+                            </div>
+                            <p style={{margin:'0 0 .5rem 0', fontSize:'.85rem', color:'#64748b'}}>{r.description}</p>
+                            <div style={{fontSize:'.8rem', color:'#94a3b8'}}><i className="fas fa-user" style={{marginRight:'.3rem'}}></i>{r.uploader} &nbsp;&bull;&nbsp; <i className="fas fa-calendar" style={{marginRight:'.3rem'}}></i>{r.date}</div>
                         </div>
-                    </nav>
-                    <main className="flex-grow p-8 max-w-6xl mx-auto w-full">
-                        {role === 'admin' && <AdminDashboard token={token} />}
-                        {(role === 'admin' || role === 'faculty') && <UploadSection token={token} />}
-                        <SearchSection token={token} />
-                    </main>
-                </div>
-            );
-        }
-
-        function Login({ onLogin }) {
-            const [username, setUsername] = useState('admin');
-            const [password, setPassword] = useState('admin123');
-            const [error, setError] = useState('');
-
-            const submit = async (e) => {
-                e.preventDefault();
-                const res = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    onLogin(data.access_token, data.role);
-                } else {
-                    setError(data.message);
-                }
-            };
-
-            return (
-                <div className="flex items-center justify-center min-h-screen">
-                    <form onSubmit={submit} className="bg-white p-8 rounded-lg shadow-md w-96">
-                        <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">System Login</h2>
-                        {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4">{error}</div>}
-                        <input className="w-full border p-2 mb-4 rounded" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
-                        <input className="w-full border p-2 mb-6 rounded" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-                        <button className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition">Login</button>
-                    </form>
-                </div>
-            );
-        }
-
-        function AdminDashboard({ token }) {
-            const [stats, setStats] = useState({ total_faculty: 0, total_courses: 0, total_publications: 0 });
-
-            useEffect(() => {
-                fetch(`${API_URL}/analytics`, { headers: { 'Authorization': `Bearer ${token}` } })
-                    .then(res => res.json())
-                    .then(data => setStats(data));
-            }, []);
-
-            return (
-                <div className="grid grid-cols-3 gap-4 mb-8">
-                    <div className="bg-white p-6 rounded shadow border-l-4 border-blue-500">
-                        <h3 className="text-gray-500 text-sm">Total Faculty</h3>
-                        <p className="text-3xl font-bold">{stats.total_faculty}</p>
+                        <a href={`${API_BASE.replace('/api','')}/api/download/${r.filename}`} target="_blank" className="btn btn-secondary"><i className="fas fa-download"></i> Download</a>
                     </div>
-                    <div className="bg-white p-6 rounded shadow border-l-4 border-green-500">
-                        <h3 className="text-gray-500 text-sm">Course Materials</h3>
-                        <p className="text-3xl font-bold">{stats.total_courses}</p>
-                    </div>
-                    <div className="bg-white p-6 rounded shadow border-l-4 border-purple-500">
-                        <h3 className="text-gray-500 text-sm">Publications</h3>
-                        <p className="text-3xl font-bold">{stats.total_publications}</p>
-                    </div>
-                </div>
-            );
-        }
+                ))}
+                {resources.length === 0 && <div className="card" style={{textAlign:'center',color:'#64748b',padding:'3rem'}}><i className="fas fa-folder-open" style={{fontSize:'3rem',opacity:.2,display:'block',marginBottom:'1rem'}}></i>No resources found.</div>}
+            </div>
 
-        function UploadSection({ token }) {
-            const [file, setFile] = useState(null);
-            const [title, setTitle] = useState('');
-            const [desc, setDesc] = useState('');
-            const [type, setType] = useState('course');
-            const [status, setStatus] = useState('');
-
-            const handleUpload = async (e) => {
-                e.preventDefault();
-                setStatus('Uploading...');
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('title', title);
-                formData.append('description', desc);
-                formData.append('type', type);
-                formData.append('faculty_id', 1); // Mocked for simplicity
-
-                const res = await fetch(`${API_URL}/upload`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                
-                if (res.ok) {
-                    setStatus('Upload successful!');
-                    setTitle(''); setDesc(''); setFile(null);
-                } else {
-                    setStatus('Upload failed.');
-                }
-            };
-
-            return (
-                <div className="bg-white p-6 rounded shadow mb-8">
-                    <h2 className="text-xl font-bold mb-4">Upload Resource</h2>
-                    <form onSubmit={handleUpload} className="grid grid-cols-2 gap-4">
-                        <input required className="border p-2 rounded" placeholder="Document Title" value={title} onChange={e=>setTitle(e.target.value)} />
-                        <select className="border p-2 rounded" value={type} onChange={e=>setType(e.target.value)}>
-                            <option value="course">Course Material</option>
-                            <option value="publication">Publication / Journal</option>
+            <Modal open={showModal} onClose={()=>setShowModal(false)} title="Upload Resource">
+                <form onSubmit={upload}>
+                    <div style={{marginBottom:'1rem'}}><label className="form-label">Document Title</label><input type="text" className="form-input" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} required /></div>
+                    <div style={{marginBottom:'1rem'}}>
+                        <label className="form-label">Resource Type</label>
+                        <select className="form-input" value={form.type} onChange={e=>setForm({...form,type:e.target.value})}>
+                            <option value="course">Course Material / Lecture Note</option>
+                            <option value="publication">Research Publication / Journal</option>
                         </select>
-                        <textarea required className="border p-2 rounded col-span-2" placeholder="Abstract / Description" value={desc} onChange={e=>setDesc(e.target.value)}></textarea>
-                        <input required type="file" className="border p-2 rounded col-span-2 bg-gray-50" onChange={e=>setFile(e.target.files[0])} />
-                        <button type="submit" className="bg-green-600 text-white p-2 rounded hover:bg-green-700 col-span-2">Upload File</button>
-                    </form>
-                    {status && <p className="mt-2 text-sm text-blue-600">{status}</p>}
-                </div>
-            );
-        }
-
-        function SearchSection({ token }) {
-            const [query, setQuery] = useState('');
-            const [results, setResults] = useState([]);
-            const [loading, setLoading] = useState(false);
-
-            const handleSearch = async () => {
-                if(!query) return;
-                setLoading(true);
-                const res = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                setResults(data);
-                setLoading(false);
-            };
-
-            return (
-                <div className="bg-white p-6 rounded shadow">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                        ✨ AI Semantic Search
-                    </h2>
-                    <div className="flex gap-2 mb-6">
-                        <input 
-                            className="flex-grow border p-3 rounded text-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                            placeholder="Search concepts, topics, or faculty research..." 
-                            value={query} 
-                            onChange={e => setQuery(e.target.value)}
-                            onKeyPress={e => e.key === 'Enter' && handleSearch()}
-                        />
-                        <button onClick={handleSearch} className="bg-blue-600 text-white px-6 rounded hover:bg-blue-700 font-bold">Search</button>
                     </div>
+                    <div style={{marginBottom:'1rem'}}><label className="form-label">Description / Abstract</label><textarea className="form-input" rows="3" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} required></textarea></div>
+                    <div style={{marginBottom:'1.5rem'}}><label className="form-label">Attach File (PDF, DOCX)</label><input type="file" className="form-input" onChange={e=>setFile(e.target.files[0])} required /></div>
+                    <button type="submit" className="btn btn-primary" style={{width:'100%'}} disabled={loading}>
+                        {loading?<><i className="fas fa-spinner fa-spin"></i> Uploading…</>:<><i className="fas fa-cloud-upload-alt"></i> Complete Upload</>}
+                    </button>
+                </form>
+            </Modal>
+        </div>
+    );
+};
 
-                    {loading ? <p>Analyzing semantic relevance...</p> : (
-                        <div className="space-y-4">
-                            {results.map(r => (
-                                <div key={r.id} className="border p-4 rounded hover:border-blue-300 transition bg-gray-50">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-lg font-bold text-blue-800">{r.title}</h3>
-                                        <span className="bg-gray-200 text-xs px-2 py-1 rounded uppercase tracking-wider">{r.type}</span>
-                                    </div>
-                                    <p className="text-gray-600 mb-3 text-sm">{r.description}</p>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-green-600 font-medium">Relevance: {(r.score * 100).toFixed(1)}%</span>
-                                        <a href={`http://localhost:5000${r.download_url}`} target="_blank" className="text-blue-600 hover:underline font-bold">Download File</a>
-                                    </div>
+// ── AI Semantic Search (All Roles) ────────────────────────────────
+const AISearch = () => {
+    const [query, setQuery] = useState('');
+    const [results, setResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+
+    const search = async () => {
+        if (!query) return;
+        setLoading(true); setHasSearched(true);
+        const data = await api.get(`/search?q=${encodeURIComponent(query)}`);
+        setResults(data);
+        setLoading(false);
+    };
+
+    return (
+        <div>
+            <div className="pg-header"><h1><i className="fas fa-magic" style={{marginRight:'.75rem'}}></i>AI Semantic Search</h1><p>Find courses and publications by concept, topic, or faculty interest.</p></div>
+            
+            <div className="card" style={{display:'flex', gap:'.75rem', background:'#f8fafc', border:'2px solid #e2e8f0'}}>
+                <input className="form-input" style={{flex:1, border:'none', boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}} placeholder="E.g. Machine learning applications in healthcare..." value={query} onChange={e=>setQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && search()} />
+                <button onClick={search} className="btn btn-primary" style={{padding:'0 2rem'}} disabled={loading}>
+                    {loading ? <i className="fas fa-circle-notch fa-spin"></i> : <i className="fas fa-search"></i>} Search
+                </button>
+            </div>
+
+            <div style={{display:'grid', gap:'1rem'}}>
+                {results.map(r => (
+                    <div key={r.id} className="card" style={{borderLeft:`4px solid ${r.score > 50 ? 'var(--j700)' : 'var(--gold)'}`}}>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+                            <div>
+                                <h3 style={{margin:'0 0 .5rem', fontWeight:800}}>{r.title}</h3>
+                                <p style={{margin:'0 0 .75rem', fontSize:'.9rem', color:'#475569'}}>{r.description}</p>
+                                <div style={{fontSize:'.8rem', color:'#64748b', display:'flex', gap:'1rem'}}>
+                                    <span><i className="fas fa-user"></i> {r.uploader}</span>
+                                    <span><i className="fas fa-tag"></i> {r.type}</span>
+                                    <span style={{color:'var(--j800)', fontWeight:700}}><i className="fas fa-bolt"></i> {r.score}% Match</span>
                                 </div>
-                            ))}
-                            {results.length === 0 && query && !loading && <p className="text-gray-500">No semantically relevant results found.</p>}
+                            </div>
+                            <a href={`${API_BASE.replace('/api','')}/api/download/${r.filename}`} target="_blank" className="btn btn-gold" style={{fontSize:'.8rem'}}><i className="fas fa-download"></i> File</a>
                         </div>
-                    )}
-                </div>
-            );
-        }
+                    </div>
+                ))}
+                {hasSearched && !loading && results.length === 0 && (
+                    <div className="card" style={{textAlign:'center', color:'#64748b'}}><i className="fas fa-robot" style={{fontSize:'2rem', opacity:0.5, marginBottom:'.5rem', display:'block'}}></i>No semantically relevant results found. Try rephrasing.</div>
+                )}
+            </div>
+        </div>
+    );
+};
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+// ── Landing Page (Stripped down version of your styling) ──────────
+const LandingPage = ({ onEnter }) => (
+    <div className="lp">
+        <div style={{position:'absolute', inset:0, backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`, opacity:0.4}}></div>
+        <div style={{position:'absolute', width:'600px', height:'600px', background:'rgba(6,78,59,.5)', borderRadius:'50%', filter:'blur(120px)', top:'-100px', right:'-100px'}}></div>
+        
+        <h1 className="lp-hero-h1">AI-Powered<br/><em>Faculty Repository</em></h1>
+        <p className="lp-hero-sub">Secure storage, intelligent retrieval. Empowering the Faculty of Computing at SLU Kafin Hausa with state-of-the-art semantic search for courses and research.</p>
+        <button className="lp-btn-hero-primary" onClick={onEnter}><i className="fas fa-sign-in-alt"></i> Access System</button>
+    </div>
+);
+
+// ── Main App Shell ────────────────────────────────────────────────
+const App = () => {
+    const [user, setUser] = useState(null);
+    const [menu, setMenu] = useState('search');
+    const [showLanding, setShowLanding] = useState(true);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('repo_user');
+        if (saved) { setUser(JSON.parse(saved)); setShowLanding(false); }
+    }, []);
+
+    const logout = () => { localStorage.removeItem('repo_user'); setUser(null); setMenu('search'); setShowLanding(true); };
+
+    if (showLanding) return <LandingPage onEnter={()=>setShowLanding(false)} />;
+    if (!user) return <LoginPage onLogin={u=>{ setUser(u); setMenu(u.role==='admin'?'analytics':'search'); }} />;
+
+    const getMenus = () => {
+        if (user.role === 'admin') return [
+            { id:'analytics', label:'Dashboard', icon:'fa-chart-line' },
+            { id:'faculty', label:'Faculty Mgr', icon:'fa-chalkboard-teacher' },
+            { id:'resources', label:'All Resources', icon:'fa-book' },
+            { id:'search', label:'AI Search', icon:'fa-magic' }
+        ];
+        if (user.role === 'faculty') return [
+            { id:'search', label:'AI Search', icon:'fa-magic' },
+            { id:'resources', label:'My Uploads', icon:'fa-folder-open' }
+        ];
+        return [{ id:'search', label:'AI Search', icon:'fa-magic' }]; // Student
+    };
+
+    return (
+        <div>
+            <header className="app-header">
+                <div style={{display:'flex',alignItems:'center',gap:'1rem'}}>
+                    <div style={{width:44,height:44,background:'var(--gold)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.3rem',color:'var(--j900)'}}><i className="fas fa-university"></i></div>
+                    <div><div style={{fontWeight:900,fontSize:'1.2rem'}}>Faculty Repository</div><div style={{fontSize:'.72rem',opacity:.85}}>SLU Kafin Hausa</div></div>
+                </div>
+                <div style={{display:'flex',alignItems:'center',gap:'1.5rem'}}>
+                    <div style={{textAlign:'right'}}>
+                        <div style={{fontWeight:700}}><i className={`fas fa-user-circle`} style={{marginRight:'.5rem'}}></i>{user.full_name}</div>
+                        <div style={{fontSize:'.75rem',opacity:.8,textTransform:'capitalize'}}>{user.role}</div>
+                    </div>
+                    <button onClick={logout} className="btn btn-gold"><i className="fas fa-sign-out-alt"></i></button>
+                </div>
+            </header>
+            <aside className="sidebar">
+                {getMenus().map(m => (
+                    <div key={m.id} className={`nav-item ${menu===m.id?'active':''}`} onClick={()=>setMenu(m.id)}>
+                        <i className={`fas ${m.icon}`} style={{width:20,textAlign:'center'}}></i><span>{m.label}</span>
+                    </div>
+                ))}
+            </aside>
+            <main className="main-content">
+                {menu === 'analytics' && <AdminOverview />}
+                {menu === 'faculty' && <FacultyManagement />}
+                {menu === 'resources' && <ResourceManagement role={user.role} />}
+                {menu === 'search' && <AISearch />}
+            </main>
+        </div>
+    );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
 </body>
 </html>
