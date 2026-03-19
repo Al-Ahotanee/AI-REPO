@@ -1,0 +1,7 @@
+flask==3.0.3
+flask_sqlalchemy
+flask_cors
+flask-bcrypt
+flask-jwt-extended
+scikit-learn
+werkzeug
